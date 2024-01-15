@@ -1,0 +1,11 @@
+#status {
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+}
+.connected {
+    background-color: green;
+}
+.disconnected {
+    background-color: red;
+}

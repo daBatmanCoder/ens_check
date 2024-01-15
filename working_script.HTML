@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENS Resolver</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            // Check if Web3 has been injected by the browser (Mist/MetaMask)
+            if (typeof web3 !== 'undefined') {
+                // Use Mist/MetaMask's provider
+                window.web3 = new Web3(web3.currentProvider);
+            } else {
+                console.log('No web3? You should consider trying MetaMask!');
+                // fallback - use your fallback strategy (local node / Infura)
+                window.web3 = new Web3(new Web3.providers.HttpProvider("https://ethereum.publicnode.com"));
+            }
+        });
+
+        function resolveENS() {
+            let ensName = document.getElementById('ensName').value;
+            if (!ensName) {
+                alert("Please enter an ENS name.");
+                return;
+            }
+
+            web3.eth.ens.getAddress(ensName).then(function(address) {
+                document.getElementById('result').innerText = 'Address: ' + address;
+            }).catch(function(error) {
+                document.getElementById('result').innerText = 'Error: ' + error.message;
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>ENS Resolver</h1>
+    <input type="text" id="ensName" placeholder="Enter ENS name">
+    <button onclick="resolveENS()">Resolve</button>
+    <p id="result"></p>
+</body>
+</html>
