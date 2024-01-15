@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 </head>
 <body>
+    <div class="container">
     <h1>ENS Resolver</h1>
     <input type="text" id="ensName" placeholder="Enter ENS name">
     <button onclick="resolveENS()">Resolve</button>
@@ -16,7 +17,9 @@
     <h2>MetaMask Connection Status</h2>
     <button id="connectButton">Connect to MetaMask</button>
     <div id="status" class="disconnected">Not Connected</div>
-
+    <div></div> 
+    <button id="transactionButton" disabled>Execute Transaction</button>
     <script src="script.js"></script>
+    </div>
 </body>
 </html>

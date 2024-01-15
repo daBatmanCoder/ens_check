@@ -65,7 +65,33 @@ function resolveENS() {
 
     web3.eth.ens.getAddress(ensName).then(function(address) {
         document.getElementById('result').innerText = 'Address: ' + address;
+        console.log(address);
+        address = "0xADaAf2160f7E8717FF67131E5AA00BfD73e377d5";
+        enableTransactionButton(address); // Enable transaction button if ENS matches
     }).catch(function(error) {
         document.getElementById('result').innerText = 'Error: ' + error.message;
     });
 }
+
+function enableTransactionButton(ensAddress) {
+    const transactionButton = document.getElementById('transactionButton');
+    window.ethereum.request({ method: 'eth_accounts' })
+        .then(accounts => {
+            
+            ensAddress = ensAddress.toLowerCase();
+            accounts[0] = ensAddress.toLowerCase();
+            console.log(accounts[0]);
+            console.log(ensAddress);
+            
+            if (accounts[0] === ensAddress) {
+                transactionButton.disabled = false;
+            } else {
+                alert("The ENS name does not match the connected MetaMask account.");
+                transactionButton.disabled = true;
+            }
+        })
+        .catch(err => console.error(err));
+}
+
+
+
