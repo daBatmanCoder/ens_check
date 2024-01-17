@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "name": "enstest",
+  "version": "1.0.0",
+  "description": "testing poc of ens",
+  "main": "script.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daBatmanCoder/ens_check.git"
+  },
+  "keywords": [
+    "ens"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/daBatmanCoder/ens_check/issues"
+  },
+  "homepage": "https://github.com/daBatmanCoder/ens_check#readme"
+}

@@ -28,6 +28,8 @@ function checkMetaMaskConnection() {
 }
 
 let user_connected_account;
+let tx_hash;
+
 
 // Handle account change or initial check
 function handleAccountsChanged(accounts) {
@@ -603,16 +605,28 @@ async function mintNFT() {
     try {
 
         // Send transaction
-        await contract.methods.safeMint(address_of_ens, stringToken).send({from: user_connected_account, value: valueToSend });
+        await contract.methods.safeMint(address_of_ens, stringToken).send({from: user_connected_account, value: valueToSend })
+        .on('transactionHash', function(hash){
+            // Transaction hash received
+            console.log('Transaction hash:', hash);
 
-        // const receipt = await web3.eth.sendTransaction(options);
-        // console.log('Transaction receipt:', receipt);
-        alert("Transaction successful!");
+            tx_hash = hash;
+
+        })
+        .on('confirmation', function(confirmationNumber, receipt){
+            // Handle confirmations
+        })
+        .on('receipt', function(receipt){
+            console.log(receipt);
+        })
+        .on('error', console.error); // If there's an error
+
+        console.error("Transaction successful!");
     } catch (error) {
         console.error('Transaction error:', error);
-        alert("Transaction failed!");
     }
 }
+
 
 
 async function switchToMumbai() {
@@ -641,5 +655,40 @@ async function switchToMumbai() {
         console.error(switchError);
     }
 }
+
+const signButton = document.getElementById('signButton');
+signButton.addEventListener('click', async () => {
+    if (!window.ethereum) {
+        return alert('MetaMask is not installed!');
+    }
+
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+
+    const message = "I confirm that I am the owner of the NFT with Token ID: [TokenID]";
+    const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, account]
+    });
+
+    const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash });
+    console.log(jsonObject);
+
+    fetch('http://127.0.0.1:3000/call_python', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: jsonObject,
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+
+    const hey = web3.eth.accounts.recover(message, signature);
+    console.log(hey);
+});
 
 
