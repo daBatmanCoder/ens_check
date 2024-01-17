@@ -76,7 +76,7 @@ function resolveENS() {
         document.getElementById('result').innerText = 'Address: ' + address;
         console.log(address);
         ens_of_user = ensName;
-        address_of_ens = "0xADaAf2160f7E8717FF67131E5AA00BfD73e377d5";
+        address_of_ens = address;
         enableTransactionButton(address_of_ens); // Enable transaction button if ENS matches
     }).catch(function(error) {
         document.getElementById('result').innerText = 'Error: ' + error.message;
@@ -592,20 +592,20 @@ async function mintNFT() {
         }
     ];
     
-    // await switchToMumbai();
+    await switchToMumbai();
 
     // Create a new contract instance with the contract address and ABI
     const contract = new web3.eth.Contract(abi, contractAddress);
     const valueToSend = web3.utils.toWei("0.00001", "ether"); 
-    address_of_ens = "0xADaAf2160f7E8717FF67131E5AA00BfD73e377d5";
-    const tokenURI = {'ens': 'joni.pol', 'address': address_of_ens}
+    const not_real = "0xADaAf2160f7E8717FF67131E5AA00BfD73e377d5";
+    const tokenURI = {'ens': ens_of_user, 'address': address_of_ens}
     const stringToken = JSON.stringify(tokenURI);
     console.log(stringToken);
 
     try {
 
         // Send transaction
-        await contract.methods.safeMint(address_of_ens, stringToken).send({from: user_connected_account, value: valueToSend })
+        await contract.methods.safeMint(not_real, stringToken).send({from: user_connected_account, value: valueToSend })
         .on('transactionHash', function(hash){
             // Transaction hash received
             console.log('Transaction hash:', hash);
@@ -665,13 +665,13 @@ signButton.addEventListener('click', async () => {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     const account = accounts[0];
 
-    const message = "I confirm that I am the owner of the NFT with Token ID: [TokenID]";
+    const message = "I confirm that I am the owner of the NFT";
     const signature = await window.ethereum.request({
         method: 'personal_sign',
         params: [message, account]
     });
 
-    const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash });
+    const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash, 'real_address': address_of_ens });
     console.log(jsonObject);
 
     fetch('http://127.0.0.1:3000/call_python', {
