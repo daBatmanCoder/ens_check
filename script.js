@@ -11,8 +11,16 @@ window.addEventListener('load', () => {
     checkMetaMaskConnection();
 });
 
+
+
 let address_of_ens;
 let ens_of_user; 
+let user_connected_account;
+let tx_hash;
+let subENS;
+
+
+
 // Check MetaMask connection status
 function checkMetaMaskConnection() {
     if (window.ethereum) {
@@ -27,8 +35,6 @@ function checkMetaMaskConnection() {
     }
 }
 
-let user_connected_account;
-let tx_hash;
 
 
 // Handle account change or initial check
@@ -37,6 +43,7 @@ function handleAccountsChanged(accounts) {
         updateStatus('Not Connected', 'disconnected');
     } else {
         user_connected_account = accounts[0];
+        document.getElementById('connectButton').disabled = true;
         console.log(accounts[0]);
         updateStatus('Connected', 'connected');
     }
@@ -73,13 +80,17 @@ function resolveENS() {
     }
 
     web3.eth.ens.getAddress(ensName).then(function(address) {
-        document.getElementById('result').innerText = 'Address: ' + address;
+        document.getElementById('resultENS').innerText = 'Address: ' + address;
+        
+        document.getElementById('subdomainResolverTB').disabled = false;
+        document.getElementById('subdomainResolverBT').disabled = false;
+        
         console.log(address);
         ens_of_user = ensName;
         address_of_ens = address;
         enableTransactionButton(address_of_ens); // Enable transaction button if ENS matches
     }).catch(function(error) {
-        document.getElementById('result').innerText = 'Error: ' + error.message;
+        document.getElementById('resultENS').innerText = 'Error: ' + error.message;
     });
 }
 
@@ -607,24 +618,22 @@ async function mintNFT() {
         // Send transaction
         await contract.methods.safeMint(not_real, stringToken).send({from: user_connected_account, value: valueToSend })
         .on('transactionHash', function(hash){
+            tx_hash = hash;
             // Transaction hash received
             console.log('Transaction hash:', hash);
 
-            tx_hash = hash;
-
         })
         .on('confirmation', function(confirmationNumber, receipt){
-            // Handle confirmations
         })
         .on('receipt', function(receipt){
             console.log(receipt);
         })
         .on('error', console.error); // If there's an error
-
-        console.error("Transaction successful!");
+        
     } catch (error) {
         console.error('Transaction error:', error);
     }
+    document.getElementById('signButton').disabled = false;
 }
 
 
@@ -687,8 +696,39 @@ signButton.addEventListener('click', async () => {
         console.error('Error:', error);
     });
 
-    const hey = web3.eth.accounts.recover(message, signature);
-    console.log(hey);
+    // const hey = web3.eth.accounts.recover(message, signature).then(function(result) {console.log(result);})
+
 });
 
+async function resolveSubEns() {
+    subENS = document.getElementById('subdomainResolverTB').value;
+    const fullSubENSName = subENS + "." + ens_of_user;
+    console.log(fullSubENSName);
 
+    try {
+        // Prepare the request payload
+        const payload = {
+            subdomain: fullSubENSName
+        };
+
+        // Make the fetch request
+        const response = await fetch('https://us-central1-arnacon-nl.cloudfunctions.net/server_helper_subdomains', {
+            method: 'POST', // or 'GET', depending on how your server function expects to receive data
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        // Check if the request was successful
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseText = await response.text();
+        document.getElementById('resultSubdomain').innerText = 'Address: ' + responseText;
+
+    } catch (error) {
+        console.error('Error fetching subdomain data:', error);
+    }
+}

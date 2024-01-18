@@ -9,17 +9,19 @@
 </head>
 <body>
     <div class="container">
-    <h1>ENS Resolver</h1>
-    <input type="text" id="ensName" placeholder="Enter ENS name">
-    <button onclick="resolveENS()">Resolve</button>
-    <p id="result"></p>
-
     <h2>MetaMask Connection Status</h2>
     <button id="connectButton">Connect to MetaMask</button>
     <div id="status" class="disconnected">Not Connected</div>
-    <div></div> 
+    <h1>ENS Resolver</h1>
+    <input type="text" id="ensName" placeholder="Enter ENS name">
+    <button onclick="resolveENS()">Resolve</button>
+    <p id="resultENS"></p>
+    <h1>Subdomain Resolver</h1>
+    <input id = "subdomainResolverTB" type = "text" id = "ensName" placeholder = "Enter Subdomain name" disabled>
+    <button id = "subdomainResolverBT" onclick="resolveSubEns()" disabled>Resolve subdomain</button>
+    <p id="resultSubdomain"></p>
     <button onclick="mintNFT()" id="transactionButton" disabled>Execute Transaction</button>
-    <button id="signButton">Sign Message</button>
+    <button id="signButton" disabled>Sign Message</button>
     <script src="script.js"></script>
     </div>
 </body>

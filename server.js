@@ -103,3 +103,9 @@ async function resolveENS(ensName) {
   console.log("The real resolve of ENS is: " + address);
   return address;
 }
+
+app.get('/favicon.ico', (req, res) => {
+  res.status(404).send('No favicon');
+});
+
+
