@@ -178,7 +178,7 @@ signButton.addEventListener('click', async () => {
     const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash, 'ens': ens_of_user });
     console.log(jsonObject);
 
-    fetch('http://localhost:3000/call_python', {
+    fetch('http://localhost:3000/verify_ens', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -711,8 +711,8 @@ async function mintNFT() {
         })
         .on('receipt', function(receipt){
             console.log(receipt);
-            document.getElementById('callUserTB').disabled = false;
-            document.getElementById('callUser').disabled = false;
+            document.getElementById('callButtonTB').disabled = false;
+            document.getElementById('callButton').disabled = false;
         })
         .on('error', console.error); // If there's an error
         
@@ -720,3 +720,45 @@ async function mintNFT() {
         console.error('Transaction error:', error);
     }
 }
+
+
+const callButton = document.getElementById('callButton');
+callButton.addEventListener('click', async () => {
+    const user_to_call = document.getElementById("callButtonTB").value;
+    console.log(user_to_call);
+
+    if (!window.ethereum) {
+        return alert('MetaMask is not installed!');
+    }
+
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+
+    const message = "I want to call: " + user_to_call;
+    const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, account]
+    });
+
+    const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash});
+    console.log(jsonObject);
+
+    fetch('http://localhost:3000/call_user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: jsonObject,
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        if (data.success && data.data === "verified") {
+            document.getElementById("resultCalling").innerText = "Calling: " + user_to_call;
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+
+});
