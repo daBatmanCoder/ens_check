@@ -1,3 +1,9 @@
+let address_of_ens;
+let ens_of_user; 
+let user_connected_account;
+let tx_hash;
+
+// Load Web3
 window.addEventListener('load', () => {
     // Initialize web3
     if (typeof web3 !== 'undefined') {
@@ -10,15 +16,6 @@ window.addEventListener('load', () => {
     // Check MetaMask connection status on load
     checkMetaMaskConnection();
 });
-
-
-
-let address_of_ens;
-let ens_of_user; 
-let user_connected_account;
-let tx_hash;
-let subENS;
-
 
 
 // Check MetaMask connection status
@@ -36,7 +33,6 @@ function checkMetaMaskConnection() {
 }
 
 
-
 // Handle account change or initial check
 function handleAccountsChanged(accounts) {
     if (accounts.length === 0) {
@@ -45,6 +41,7 @@ function handleAccountsChanged(accounts) {
         user_connected_account = accounts[0];
         document.getElementById('connectButton').disabled = true;
         console.log(accounts[0]);
+account_of_user = accounts[0];
         updateStatus('Connected', 'connected');
     }
 }
@@ -72,54 +69,141 @@ connectButton.addEventListener('click', async () => {
     }
 });
 
-function resolveENS() {
+
+
+
+
+// Resolve ENS name
+async function resolveENS() {
+
     let ensName = document.getElementById('ensName').value;
     if (!ensName) {
         alert("Please enter an ENS name.");
         return;
     }
 
-    web3.eth.ens.getAddress(ensName).then(function(address) {
-        document.getElementById('resultENS').innerText = 'Address: ' + address;
-        
-        document.getElementById('subdomainResolverTB').disabled = false;
-        document.getElementById('subdomainResolverBT').disabled = false;
-        
-        console.log(address);
+    try {
+        // Prepare the request payload
+        const payload = {
+            domain: ensName
+        };
+
+        // Make the fetch request
+        const response = await fetch('https://us-central1-arnacon-nl.cloudfunctions.net/server_helper_subdomains', {
+            method: 'POST', // or 'GET', depending on how your server function expects to receive data
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        // Check if the request was successful
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseText = await response.text();
+        console.log(responseText)
         ens_of_user = ensName;
-        address_of_ens = address;
-        enableTransactionButton(address_of_ens); // Enable transaction button if ENS matches
-    }).catch(function(error) {
-        document.getElementById('resultENS').innerText = 'Error: ' + error.message;
-    });
+        address_of_ens = responseText;
+        enableTransactionButton(address_of_ens); 
+        document.getElementById('resultENS').innerText = 'Address: ' + address_of_ens;
+
+    } catch (error) {
+        console.error('Error fetching subdomain data:', error);
+    }
 }
 
+
 function enableTransactionButton(ensAddress) {
-    const transactionButton = document.getElementById('transactionButton');
+    const signButton = document.getElementById('signButton');
     window.ethereum.request({ method: 'eth_accounts' })
         .then(accounts => {
             
             ensAddress = ensAddress.toLowerCase();
-            accounts[0] = ensAddress.toLowerCase();
-            console.log(accounts[0]);
-            console.log(ensAddress);
             
             if (accounts[0] === ensAddress) {
-                transactionButton.disabled = false;
+                signButton.disabled = false;
             } else {
                 alert("The ENS name does not match the connected MetaMask account.");
-                transactionButton.disabled = true;
+                signButton.disabled = true;
             }
         })
         .catch(err => console.error(err));
 }
 
+
+async function switchToMumbai() {
+    try {
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x13881' }], // 0x13881 is the chain ID for Mumbai testnet in hexadecimal
+        });
+    } catch (switchError) {
+        // This error code indicates that the chain has not been added to MetaMask.
+        if (switchError.code === 4902) {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: '0x13881',
+                        rpcUrl: 'https://polygon-mumbai-bor.publicnode.com' // Add other chain parameters as required
+                    }],
+                });
+            } catch (addError) {
+                // Handle adding chain error
+                console.error(addError);
+            }
+        }
+        // Handle other errors
+        console.error(switchError);
+    }
+}
+
+const signButton = document.getElementById('signButton');
+signButton.addEventListener('click', async () => {
+    if (!window.ethereum) {
+        return alert('MetaMask is not installed!');
+    }
+
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+
+    const message = "I confirm that I am the owner of the NFT";
+    const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, account]
+    });
+
+    const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash, 'address_of_sender': address_of_ens });
+    console.log(jsonObject);
+
+    fetch('http://localhost:3000/call_python', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: jsonObject,
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        if (data.success && data.data === "verified") {
+            document.getElementById("transactionButton").disabled = false;
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+
+    // const hey = web3.eth.accounts.recover(message, signature).then(function(result) {console.log(result);})
+
+});
+
 async function mintNFT() {
 
     const contractAddress = '0x30B9a25E4b88CF8A258CE1910827e3B7957b4ce2'; // Replace with your contract address
 
-    // The ABI (Application Binary Interface) is the standard way to interact with contracts in the Ethereum ecosystem.
-    // You can get the ABI from the contract's documentation or source code
     const abi = [
         {
             "inputs": [
@@ -608,7 +692,7 @@ async function mintNFT() {
     // Create a new contract instance with the contract address and ABI
     const contract = new web3.eth.Contract(abi, contractAddress);
     const valueToSend = web3.utils.toWei("0.00001", "ether"); 
-    const not_real = "0xADaAf2160f7E8717FF67131E5AA00BfD73e377d5";
+    const wallet_app = "0x9e1611a42DA718FB14eCdE3fE6eba3Bb5B97F77B";
     const tokenURI = {'ens': ens_of_user, 'address': address_of_ens}
     const stringToken = JSON.stringify(tokenURI);
     console.log(stringToken);
@@ -616,7 +700,7 @@ async function mintNFT() {
     try {
 
         // Send transaction
-        await contract.methods.safeMint(not_real, stringToken).send({from: user_connected_account, value: valueToSend })
+        await contract.methods.safeMint(wallet_app, stringToken).send({from: user_connected_account, value: valueToSend })
         .on('transactionHash', function(hash){
             tx_hash = hash;
             // Transaction hash received
@@ -627,108 +711,12 @@ async function mintNFT() {
         })
         .on('receipt', function(receipt){
             console.log(receipt);
+            document.getElementById('callUserTB').disabled = false;
+            document.getElementById('callUser').disabled = false;
         })
         .on('error', console.error); // If there's an error
         
     } catch (error) {
         console.error('Transaction error:', error);
-    }
-    document.getElementById('signButton').disabled = false;
-}
-
-
-
-async function switchToMumbai() {
-    try {
-        await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x13881' }], // 0x13881 is the chain ID for Mumbai testnet in hexadecimal
-        });
-    } catch (switchError) {
-        // This error code indicates that the chain has not been added to MetaMask.
-        if (switchError.code === 4902) {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                        chainId: '0x13881',
-                        rpcUrl: 'https://polygon-mumbai-bor.publicnode.com' // Add other chain parameters as required
-                    }],
-                });
-            } catch (addError) {
-                // Handle adding chain error
-                console.error(addError);
-            }
-        }
-        // Handle other errors
-        console.error(switchError);
-    }
-}
-
-const signButton = document.getElementById('signButton');
-signButton.addEventListener('click', async () => {
-    if (!window.ethereum) {
-        return alert('MetaMask is not installed!');
-    }
-
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    const account = accounts[0];
-
-    const message = "I confirm that I am the owner of the NFT";
-    const signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [message, account]
-    });
-
-    const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash, 'real_address': address_of_ens });
-    console.log(jsonObject);
-
-    fetch('http://127.0.0.1:3000/call_python', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: jsonObject,
-    })
-    .then(response => response.json())
-    .then(data => console.log(data))
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-
-    // const hey = web3.eth.accounts.recover(message, signature).then(function(result) {console.log(result);})
-
-});
-
-async function resolveSubEns() {
-    subENS = document.getElementById('subdomainResolverTB').value;
-    const fullSubENSName = subENS + "." + ens_of_user;
-    console.log(fullSubENSName);
-
-    try {
-        // Prepare the request payload
-        const payload = {
-            subdomain: fullSubENSName
-        };
-
-        // Make the fetch request
-        const response = await fetch('https://us-central1-arnacon-nl.cloudfunctions.net/server_helper_subdomains', {
-            method: 'POST', // or 'GET', depending on how your server function expects to receive data
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        });
-
-        // Check if the request was successful
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseText = await response.text();
-        document.getElementById('resultSubdomain').innerText = 'Address: ' + responseText;
-
-    } catch (error) {
-        console.error('Error fetching subdomain data:', error);
     }
 }
