@@ -80,19 +80,19 @@ app.post('/call_user', async (req, res) => {
 
   const ens_of_user = token_uri_json.ens; // User ENS
   
-  const address_of_nft_owner = token_uri_json.address; // User Address
+  const address_of_wallet = token_uri_json.address; // User Address
 
   const owner_of_nft = json_details.ownerOf; // Owner of the NFT from transaction hash
 
   const address_resolved = await resolveENS(ens_of_user); // The owner of the ENS that in the NFT
 
   // To check if the ENS is still owned by the same address
-  if(address_resolved.toLowerCase() != address_of_nft_owner.toLowerCase()){
+  if(address_from_sign.toLowerCase() != address_of_wallet.toLowerCase()){
     res.status(500).json({ error: 'The ENS is not longer yours' });
   }
 
   // To check if the signer is the owner of the NFT - application wallet
-  if ( address_from_sign.toLowerCase() != owner_of_nft.toLowerCase() ){
+  if ( address_resolved.toLowerCase() != owner_of_nft.toLowerCase() ){
       res.status(500).json({ error: 'Signature does not match ENS name' });
   }
 

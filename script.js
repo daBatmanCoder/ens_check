@@ -106,32 +106,12 @@ async function resolveENS() {
         console.log(responseText)
         ens_of_user = ensName;
         address_of_ens = responseText;
-        enableTransactionButton(address_of_ens); 
         document.getElementById('resultENS').innerText = 'Address: ' + address_of_ens;
 
     } catch (error) {
         console.error('Error fetching subdomain data:', error);
     }
 }
-
-
-function enableTransactionButton(ensAddress) {
-    const signButton = document.getElementById('signButton');
-    window.ethereum.request({ method: 'eth_accounts' })
-        .then(accounts => {
-            
-            ensAddress = ensAddress.toLowerCase();
-            
-            if (accounts[0] === ensAddress) {
-                signButton.disabled = false;
-            } else {
-                alert("The ENS name does not match the connected MetaMask account.");
-                signButton.disabled = true;
-            }
-        })
-        .catch(err => console.error(err));
-}
-
 
 async function switchToMumbai() {
     try {
@@ -160,45 +140,45 @@ async function switchToMumbai() {
     }
 }
 
-const signButton = document.getElementById('signButton');
-signButton.addEventListener('click', async () => {
-    if (!window.ethereum) {
-        return alert('MetaMask is not installed!');
-    }
+// const signButton = document.getElementById('signButton');
+// signButton.addEventListener('click', async () => {
+//     if (!window.ethereum) {
+//         return alert('MetaMask is not installed!');
+//     }
 
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    const account = accounts[0];
+//     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+//     const account = accounts[0];
 
-    const message = "I confirm that I am the owner of the NFT";
-    const signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [message, account]
-    });
+//     const message = "UUID: 912831982319283";
+//     const signature = await window.ethereum.request({
+//         method: 'personal_sign',
+//         params: [message, account]
+//     });
 
-    const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash, 'ens': ens_of_user });
-    console.log(jsonObject);
+//     const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash, 'ens': ens_of_user });
+//     console.log(jsonObject);
 
-    fetch('http://localhost:3000/verify_ens', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: jsonObject,
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log(data);
-        if (data.success && data.data === "verified") {
-            document.getElementById("transactionButton").disabled = false;
-        }
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+//     fetch('http://localhost:3000/verify_ens', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: jsonObject,
+//     })
+//     .then(response => response.json())
+//     .then(data => {
+//         console.log(data);
+//         if (data.success && data.data === "verified") {
+//             document.getElementById("transactionButton").disabled = false;
+//         }
+//     })
+//     .catch((error) => {
+//         console.error('Error:', error);
+//     });
 
-    // const hey = web3.eth.accounts.recover(message, signature).then(function(result) {console.log(result);})
+//     // const hey = web3.eth.accounts.recover(message, signature).then(function(result) {console.log(result);})
 
-});
+// });
 
 async function mintNFT() {
 
@@ -693,14 +673,14 @@ async function mintNFT() {
     const contract = new web3.eth.Contract(abi, contractAddress);
     const valueToSend = web3.utils.toWei("0.00001", "ether"); 
     const wallet_app = "0x9e1611a42DA718FB14eCdE3fE6eba3Bb5B97F77B";
-    const tokenURI = {'ens': ens_of_user, 'address': address_of_ens}
+    const tokenURI = {'ens': ens_of_user, 'address': wallet_app}
     const stringToken = JSON.stringify(tokenURI);
     console.log(stringToken);
 
     try {
 
         // Send transaction
-        await contract.methods.safeMint(wallet_app, stringToken).send({from: user_connected_account, value: valueToSend })
+        await contract.methods.safeMint(address_of_ens, stringToken).send({from: user_connected_account, value: valueToSend })
         .on('transactionHash', function(hash){
             tx_hash = hash;
             // Transaction hash received
@@ -710,9 +690,9 @@ async function mintNFT() {
         .on('confirmation', function(confirmationNumber, receipt){
         })
         .on('receipt', function(receipt){
-            console.log(receipt);
+            document.getElementById('callBT').disabled = false;
             document.getElementById('callButtonTB').disabled = false;
-            document.getElementById('callButton').disabled = false;
+            console.log(receipt);
         })
         .on('error', console.error); // If there's an error
         
@@ -722,7 +702,7 @@ async function mintNFT() {
 }
 
 
-const callButton = document.getElementById('callButton');
+const callButton = document.getElementById('callBT');
 callButton.addEventListener('click', async () => {
     const user_to_call = document.getElementById("callButtonTB").value;
     console.log(user_to_call);
@@ -733,8 +713,8 @@ callButton.addEventListener('click', async () => {
 
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     const account = accounts[0];
-
-    const message = "I want to call: " + user_to_call;
+    const uuid = "912831982319283";
+    const message = "I want to call: " + user_to_call + " with UUID: " + uuid;
     const signature = await window.ethereum.request({
         method: 'personal_sign',
         params: [message, account]

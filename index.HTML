@@ -8,7 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 </head>
 <body>
+    <body style="background-color: rgb(0, 149, 255);">
     <div class="container">
+    <div></div>
     <h2>MetaMask Connection Status</h2>
     <button id="connectButton">Connect to MetaMask</button>
     <div id="status" class="disconnected">Not Connected</div>
@@ -16,13 +18,10 @@
     <input type="text" id="ensName" placeholder="Enter ENS name">
     <button onclick="resolveENS()">Resolve</button>
     <p id="resultENS"></p>
-    <button id="signButton" disabled>Sign Message</button>
-    <button onclick="mintNFT()" id="transactionButton" disabled>Execute Transaction</button>
-    <div></div>
-    <div></div>
+    <button onclick="mintNFT()" id="transactionButton">Execute Transaction</button>
     <div></div>
     <input type="text" id="callButtonTB" placeholder="Enter ENS name to call" disabled>
-    <button id="callButton" disabled>Call User</button>
+    <button id="callBT" disabled>Call User</button>
     <p id="resultCalling"></p>
     <script src="script.js"></script>
     </div>
