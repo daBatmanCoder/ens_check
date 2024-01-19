@@ -41,12 +41,12 @@ app.post('/call_python', async (req, res) => {
 
     // Recover the account address from the message and signature
     const address_from_sign = recoverAccount(json_body.message, json_body.signature); // Should be 0xadaa
-    console.log("The signed address: ( account who signed ): " + address_from_sign);
-    const address_of_signer = json_body.address_of_sender; // Should be 0xadaa
+    const ens_of_user = json_body.ens; // Should be 0xadaa
+    console.log(ens_of_user);
+    const address_resolved = await resolveENS(ens_of_user); // Should be 0xc4c
+    console.log("The resolved address is: " + address_resolved);
 
-    // const real_address_resolved = await resolveENS('cellact.eth'); // Should be 0xc4c
-
-    if ( address_from_sign.toLowerCase() != address_of_signer.toLowerCase() ){
+    if ( address_from_sign.toLowerCase() != address_resolved.toLowerCase() ){
         res.status(500).json({ error: 'Signature does not match ENS name' });
     }
     else{
@@ -75,10 +75,46 @@ function recoverAccount(message, signature) {
 
 
 async function resolveENS(ensName) {
-  // Resolve the ENS name to an address
-  const address = await web3.eth.ens.getAddress(ensName);
-  console.log("The real resolve of ENS is: " + address);
-  return address;
+  // // Resolve the ENS name to an address
+  // const address = await web3.eth.ens.getAddress(ensName);
+  // console.log("The real resolve of ENS is: " + address);
+  // return address;
+
+  const address_of_ens = "";
+
+  if (!ensName) {
+    alert("Please enter an ENS name.");
+    return;
+  }
+
+  try {
+      // Prepare the request payload
+      const payload = {
+          domain: ensName
+      };
+
+      // Make the fetch request
+      const response = await fetch('https://us-central1-arnacon-nl.cloudfunctions.net/server_helper_subdomains', {
+          method: 'POST', // or 'GET', depending on how your server function expects to receive data
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+      });
+
+      // Check if the request was successful
+      if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const responseText = await response.text();
+      console.log(responseText);
+      return responseText;
+
+  } catch (error) {
+      console.error('Error fetching subdomain data:', error);
+  }
+  return address_of_ens;
 }
 
 app.get('/favicon.ico', (req, res) => {

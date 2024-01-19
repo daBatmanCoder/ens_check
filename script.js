@@ -175,7 +175,7 @@ signButton.addEventListener('click', async () => {
         params: [message, account]
     });
 
-    const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash, 'address_of_sender': address_of_ens });
+    const jsonObject = JSON.stringify({ 'message':message, 'signature': signature,'hash': tx_hash, 'ens': ens_of_user });
     console.log(jsonObject);
 
     fetch('http://localhost:3000/call_python', {
